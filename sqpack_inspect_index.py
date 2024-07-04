@@ -78,7 +78,8 @@ print("\nSHA-1 of Index:", sha1_hash)
 index_hash_table_entry_fmt = "Q I I"
 
 IndexHashTableEntry = namedtuple(
-    "IndexHashTableEntry", "filename_crc32 folder_crc32 dataFileId offset padding"
+    "IndexHashTableEntry",
+    "filename_crc32 folder_crc32 unknown dataFileId offset padding",
 )
 
 
@@ -95,10 +96,11 @@ def read_index_hash_table_entries(file_path, offset, size, sort=True):
             )
             filename_crc32 = hash_value & 0xFFFFFFFF
             folder_crc32 = hash_value >> 32
+            unknown = data & 0x1
             dataFileId = (data & 0b1110) >> 1
             offset = (data & ~0xF) * 0x08
             entry = IndexHashTableEntry(
-                filename_crc32, folder_crc32, dataFileId, offset, padding
+                filename_crc32, folder_crc32, unknown, dataFileId, offset, padding
             )
             entries.append(entry)
     if sort:
@@ -116,7 +118,7 @@ def print_index_hash_table_entries(entries):
 
 
 # Read and print the IndexHashTableEntries
-# index_hash_table_entries = read_index_hash_table_entries(
-#     file_path, sqpack_index_header.indexDataOffset, sqpack_index_header.indexDataSize
-# )
-# print_index_hash_table_entries(index_hash_table_entries)
+index_hash_table_entries = read_index_hash_table_entries(
+    file_path, sqpack_index_header.indexDataOffset, sqpack_index_header.indexDataSize
+)
+print_index_hash_table_entries(index_hash_table_entries)
