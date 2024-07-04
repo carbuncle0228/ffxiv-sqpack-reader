@@ -1,3 +1,7 @@
+build:
+	poetry install
+	poetry export --without-hashes --with dev --with test --output requirements.txt
+
 test:
 	TZ=UTC pytest -s
 
