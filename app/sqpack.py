@@ -17,19 +17,22 @@ from app.ctype_structure import (
 
 class SQPack:
     folder_path: str
+    sqpack_path: str
     index_path: str
+    data_path: str
     index_pack_header: SqPackHeader
     index_header: IndexHeader
     folder_keymap: dict[str, IndexFolderSegment] = {}
     file_keymap: dict[str, IndexFileSegment] = {}
     exd_file = "0a0000.win32"
-    files = []
+    files: dict[str, int] = {}
 
     def __init__(self, folder_path: str):
         self.folder_path = os.path.normpath(os.path.expanduser(folder_path))
-        self.index1_path = os.path.join(self.folder_path, f"{self.exd_file}.index")
+        self.sqpack_path = os.path.join(self.folder_path, "game", "sqpack", "ffxiv")
+        self.index_path = os.path.join(self.sqpack_path, f"{self.exd_file}.index")
         self.init_index()
-        self.date_path = os.path.join(self.folder_path, f"{self.exd_file}.dat")
+        self.date_path = os.path.join(self.sqpack_path, f"{self.exd_file}.dat")
 
         self.init_data()
 
@@ -56,7 +59,7 @@ class SQPack:
         print("folder segment count:", header.folder_segment_header.segment_count)
 
     def init_index(self):
-        with open(self.index1_path, "rb") as f:
+        with open(self.index_path, "rb") as f:
             # Read the SqPackHeader data
             self.index_pack_header = SqPackHeader.from_buffer_copy(
                 f.read(sizeof(SqPackHeader))
@@ -106,6 +109,7 @@ class SQPack:
                 )
                 block_tables.append(block_table)
             end_of_header = file_segment.offset + data_entry_header.header_length
+            bytes_io = io.BytesIO()
             for block_table in block_tables:
                 f.seek(end_of_header + block_table.offset)
                 block_header = BlockHeader.from_buffer_copy(f.read(sizeof(BlockHeader)))
@@ -122,9 +126,9 @@ class SQPack:
                 block_data = f.read(block_table.block_size)
                 if block_header.is_compressed:
                     block_data = zlib.decompress(block_data, -zlib.MAX_WBITS)
-                bytes_io = io.BytesIO(block_data)
-
-                # Read and print lines one by one
-                for line in bytes_io:
-                    self.files.append(line)
-        pass
+                bytes_io.write(block_data)
+            bytes_io.seek(0)
+            bytes_io.readline()  # skip header EXLT,2
+            for line in bytes_io:
+                file, id = str(line.strip().decode("utf-8")).split(",")
+                self.files.update({file: int(id)})
