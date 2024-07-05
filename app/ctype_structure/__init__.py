@@ -153,7 +153,7 @@ class Index2Segment(LittleEndianStructure):
         return (self.data & ~0xF) * 0x08
 
 
-class SqPackDataHeader(LittleEndianStructure):
+class DataHeader(LittleEndianStructure):
     _fields_ = [
         ("header_length", c_uint32),
         ("null_1", c_uint32),
@@ -224,6 +224,15 @@ class DataEntryHeader(LittleEndianStructure):
     block_buffer_size: int
     num_blocks: int
 
+    @property
+    def length(self):
+        """
+        Important to note that any fields prepended with "Block" will mean that the number is in blocks,
+         or units of 128-bytes.
+         e.g., BlockOffset means that the offset in bytes would be calculated by BlockOffset << 7 or BlockOffset * 128.
+        """
+        return self.block_buffer_size * 128
+
 
 class Type2BlockTable(LittleEndianStructure):
     _fields_ = (
@@ -252,3 +261,24 @@ class Type4BlockTable(LittleEndianStructure):
     frame_blocksize_offset: int
     frame_blocksize_count: int
     frame_blocksize_size: int
+
+
+class BlockHeader(LittleEndianStructure):
+    _fields_ = (
+        ("header_size", c_uint32),
+        ("null", c_uint32),
+        (
+            "compressed_length",
+            c_uint32,
+        ),  # If this is 32000, IT'S NOT COMPRESSED. Use decompressed length to read the data in and just append
+        ("decompressed_length", c_uint32),  # Will be max 16kb.
+    )
+    header_size: int
+    null: int
+
+    compressed_length: int
+    decompressed_length: int
+
+    @property
+    def is_compressed(self):
+        return self.compressed_length < 32000
