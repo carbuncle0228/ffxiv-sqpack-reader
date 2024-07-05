@@ -1,6 +1,6 @@
 from _ctypes import sizeof
 
-from app.ctype_structure import SqPackHeader, SqPackIndexHeader
+from app.ctype_structure import SqPackHeader, IndexHeader
 from app.tests import calculate_sha1
 
 
@@ -16,31 +16,34 @@ def test_read_sqpack_index_headers(index_file_path):
     with open(index_file_path, "rb") as f:
         # Read the SqPack Index header data
         f.seek(1024)
-        sqpack_index_header_data = f.read(sizeof(SqPackIndexHeader))
-        sqpack_index_header = SqPackIndexHeader.from_buffer_copy(
-            sqpack_index_header_data
-        )
-    assert bytes(sqpack_index_header.sq_pack_index_header_item1.sha1).hex() == calculate_sha1(
+        sqpack_index_header_data = f.read(sizeof(IndexHeader))
+        sqpack_index_header = IndexHeader.from_buffer_copy(sqpack_index_header_data)
+    assert bytes(sqpack_index_header.file_segment_header.sha1).hex() == calculate_sha1(
         index_file_path,
-        sqpack_index_header.sq_pack_index_header_item1.index_data_offset,
-        sqpack_index_header.sq_pack_index_header_item1.index_data_size,
+        sqpack_index_header.file_segment_header.segment_offset,
+        sqpack_index_header.file_segment_header.segment_size,
     )
-    assert bytes(sqpack_index_header.sq_pack_index_header_item2.sha1).hex() == calculate_sha1(
+    assert bytes(
+        sqpack_index_header.unknown_segment_header.sha1
+    ).hex() == calculate_sha1(
         index_file_path,
-        sqpack_index_header.sq_pack_index_header_item2.index_data_offset,
-        sqpack_index_header.sq_pack_index_header_item2.index_data_size,
+        sqpack_index_header.unknown_segment_header.segment_offset,
+        sqpack_index_header.unknown_segment_header.segment_size,
     )
-    assert bytes(sqpack_index_header.sq_pack_index_header_item3.sha1).hex() == calculate_sha1(
+    assert bytes(
+        sqpack_index_header.unknown_segment_header2.sha1
+    ).hex() == calculate_sha1(
         index_file_path,
-        sqpack_index_header.sq_pack_index_header_item3.index_data_offset,
-        sqpack_index_header.sq_pack_index_header_item3.index_data_size,
+        sqpack_index_header.unknown_segment_header2.segment_offset,
+        sqpack_index_header.unknown_segment_header2.segment_size,
     )
-    assert bytes(sqpack_index_header.sq_pack_index_header_item4.sha1).hex() == calculate_sha1(
+    assert bytes(
+        sqpack_index_header.folder_segment_header.sha1
+    ).hex() == calculate_sha1(
         index_file_path,
-        sqpack_index_header.sq_pack_index_header_item4.index_data_offset,
-        sqpack_index_header.sq_pack_index_header_item4.index_data_size,
+        sqpack_index_header.folder_segment_header.segment_offset,
+        sqpack_index_header.folder_segment_header.segment_size,
     )
-
 
 
 # fail

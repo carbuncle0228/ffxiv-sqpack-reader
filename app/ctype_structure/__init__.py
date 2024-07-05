@@ -1,5 +1,5 @@
 # Define ctypes structures for the headers
-from ctypes import LittleEndianStructure, c_char, c_uint8, c_uint32, c_uint64, c_int16
+from ctypes import LittleEndianStructure, c_char, c_uint8, c_uint32, c_int16
 
 
 class SqPackHeader(LittleEndianStructure):
@@ -7,7 +7,7 @@ class SqPackHeader(LittleEndianStructure):
         ("magic", c_char * 8),
         ("platform_id", c_uint8),
         ("padding0", c_uint8 * 3),
-        ("size", c_uint32),
+        ("header_length", c_uint32),
         ("version", c_uint32),
         ("type", c_uint32),
         ("unknown", c_uint8 * 936),
@@ -24,8 +24,8 @@ class SqPackHeader(LittleEndianStructure):
         return self.platform_id
 
     @property
-    def size(self):
-        return self.size
+    def header_length(self):
+        return self.header_length
 
     @property
     def version(self):
@@ -40,52 +40,60 @@ class SqPackHeader(LittleEndianStructure):
         return self.sha1
 
 
-class SqPackIndexHeaderItem(LittleEndianStructure):
-
+class SegmentHeader(LittleEndianStructure):
     _fields_ = [
         ("type", c_uint32),
-        ("index_data_offset", c_uint32),
-        ("index_data_size", c_uint32),
+        ("segment_offset", c_uint32),
+        ("segment_size", c_uint32),
         ("sha1", c_uint8 * 20),
     ]
 
-    type:int
-    index_data_offset: int
-    index_data_size: int
-class SqPackIndexHeader(LittleEndianStructure):
-    size: int
-    sq_pack_index_header_item: list[SqPackIndexHeaderItem]
-    sq_pack_index_header_item2: SqPackIndexHeaderItem
-    sq_pack_index_header_item3: SqPackIndexHeaderItem
-    sq_pack_index_header_item4: SqPackIndexHeaderItem
-    #Segment 1 is usually files, Segment 2/3 is unknown, Segment 4 is folders.
+    type: int
+    segment_offset: int
+    segment_size: int
+    sha1: bytes  # Hash of the segment... [Segment Offset] to [Segment Offset] + [Segment Size]
+
+    @property
+    def segment_count(self):
+        return self.segment_size // 0x10  # 0x10 entry size
+
+
+class IndexHeader(LittleEndianStructure):
+    header_length: int
+    file_segment_header: SegmentHeader
+    unknown_segment_header: SegmentHeader
+    unknown_segment_header2: SegmentHeader
+    folder_segment_header: SegmentHeader
+    # Segment 1 is usually files, Segment 2/3 is unknown, Segment 4 is folders.
 
     _fields_ = (
-        ("size", c_uint32),
-        ("sq_pack_index_header_item1", SqPackIndexHeaderItem),
+        ("header_length", c_uint32),
+        ("file_segment_header", SegmentHeader),
         ("padding1", c_uint8 * 0x2C),
-        ("sq_pack_index_header_item2", SqPackIndexHeaderItem),
+        ("unknown_segment_header", SegmentHeader),
         ("padding2", c_uint8 * 0x28),
-        ("sq_pack_index_header_item3", SqPackIndexHeaderItem),
+        ("unknown_segment_header2", SegmentHeader),
         ("padding3", c_uint8 * 0x28),
-        ("sq_pack_index_header_item4", SqPackIndexHeaderItem),
+        ("folder_segment_header", SegmentHeader),
         ("padding4", c_uint8 * 0x28),
     )
 
 
-
-
-
-class IndexHashTableEntry(LittleEndianStructure):
-    _fields_ = [("hash", c_uint64), ("data", c_uint32), ("padding", c_uint32)]
-
-    @property
-    def filename_crc32(self):
-        return self.hash & 0xFFFFFFFF
+class IndexFileSegment(LittleEndianStructure):
+    _fields_ = [
+        ("filename_hash", c_uint32),
+        ("folder_hash", c_uint32),
+        ("data", c_uint32),
+        ("padding", c_uint32),
+    ]
 
     @property
-    def folder_crc32(self):
-        return self.hash >> 32
+    def filename_hash(self):
+        return self.filename_hash
+
+    @property
+    def folder_hash(self):
+        return self.folder_hash
 
     @property
     def unknown(self):
@@ -100,7 +108,36 @@ class IndexHashTableEntry(LittleEndianStructure):
         return (self.data & ~0xF) * 0x08
 
 
-class Index2HashTableEntry(LittleEndianStructure):
+class IndexFolderSegment(LittleEndianStructure):
+    file_keymap: dict[str, IndexFileSegment]
+    _fields_ = [
+        ("folder_hash", c_uint32),
+        ("files_offset", c_uint32),  # Offset to file list in segment 1.
+        (
+            "files_size",
+            c_uint32,
+        ),  # Total size of all file segments for this folder. To find # files, divide by 0x10 (16).
+        ("padding", c_uint32),
+    ]
+
+    @property
+    def folder_hash(self):
+        return self.folder_hash
+
+    @property
+    def files_offset(self):
+        return self.files_offset
+
+    @property
+    def files_size(self):
+        return self.files_size
+
+    @property
+    def files_count(self):
+        return self.files_size // 0x10  # 0x10 entry size
+
+
+class Index2Segment(LittleEndianStructure):
     _fields_ = [("hash", c_uint32), ("data", c_uint32)]
 
     @property
@@ -118,7 +155,7 @@ class Index2HashTableEntry(LittleEndianStructure):
 
 class SqPackDataHeader(LittleEndianStructure):
     _fields_ = [
-        ("size", c_uint32),
+        ("header_length", c_uint32),
         ("null_1", c_uint32),
         ("unknown", c_uint32),
         (
@@ -139,8 +176,8 @@ class SqPackDataHeader(LittleEndianStructure):
     ]
 
     @property
-    def size(self):
-        return self.size
+    def header_length(self):
+        return self.header_length
 
     @property
     def unknown(self):
@@ -169,7 +206,7 @@ class SqPackDataHeader(LittleEndianStructure):
 
 class DataEntryHeader(LittleEndianStructure):
     _fields_ = (
-        ("size", c_uint32),
+        ("header_length", c_uint32),
         (
             "content_type",
             c_uint32,
@@ -180,7 +217,7 @@ class DataEntryHeader(LittleEndianStructure):
         ("num_blocks", c_uint32),
     )
 
-    size: int
+    header_length: int
     content_type: int
     decompressed_size: int
     unknown_1: int
