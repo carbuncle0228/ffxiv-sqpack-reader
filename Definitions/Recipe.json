@@ -1,0 +1,166 @@
+{
+  "sheet": "Recipe",
+  "defaultColumn": "Item{Result}",
+  "definitions": [
+    {
+      "index": 0,
+      "name": "Number"
+    },
+    {
+      "index": 1,
+      "name": "CraftType",
+      "converter": {
+        "type": "link",
+        "target": "CraftType"
+      }
+    },
+    {
+      "index": 2,
+      "name": "RecipeLevelTable",
+      "converter": {
+        "type": "link",
+        "target": "RecipeLevelTable"
+      }
+    },
+    {
+      "index": 3,
+      "name": "Item{Result}",
+      "converter": {
+        "type": "link",
+        "target": "Item"
+      }
+    },
+    {
+      "index": 4,
+      "name": "Amount{Result}"
+    },
+    {
+      "index": 5,
+      "type": "repeat",
+      "count": 8,
+      "definition": {
+        "type": "group",
+        "members": [
+          {
+            "name": "Item{Ingredient}",
+            "converter": {
+              "type": "link",
+              "target": "Item"
+            }
+          },
+          {
+            "name": "Amount{Ingredient}"
+          }
+        ]
+      }
+    },
+    {
+      "index": 21,
+      "name": "RecipeNotebookList",
+      "converter": {
+        "type": "link",
+        "target": "RecipeNotebookList"
+      }
+    },
+    {
+      "index": 22,
+      "name": "DisplayPriority"
+    },
+    {
+      "index": 23,
+      "name": "IsSecondary"
+    },
+    {
+      "index": 24,
+      "name": "MaterialQualityFactor"
+    },
+    {
+      "index": 25,
+      "name": "DifficultyFactor"
+    },
+    {
+      "index": 26,
+      "name": "QualityFactor"
+    },
+    {
+      "index": 27,
+      "name": "DurabilityFactor"
+    },
+    {
+      "index": 28,
+      "name": "RequiredQuality"
+    },
+    {
+      "index": 29,
+      "name": "RequiredCraftsmanship"
+    },
+    {
+      "index": 30,
+      "name": "RequiredControl"
+    },
+    {
+      "index": 31,
+      "name": "QuickSynthCraftsmanship"
+    },
+    {
+      "index": 32,
+      "name": "QuickSynthControl"
+    },
+    {
+      "index": 33,
+      "name": "SecretRecipeBook",
+      "converter": {
+        "type": "link",
+        "target": "SecretRecipeBook"
+      }
+    },
+    {
+      "index": 34,
+      "name": "Quest",
+      "converter": {
+        "type": "link",
+        "target": "Quest"
+      }
+    },
+    {
+      "index": 35,
+      "name": "CanQuickSynth"
+    },
+    {
+      "index": 36,
+      "name": "CanHq"
+    },
+    {
+      "index": 37,
+      "name": "ExpRewarded"
+    },
+    {
+      "index": 38,
+      "name": "Status{Required}",
+      "converter": {
+        "type": "link",
+        "target": "Status"
+      }
+    },
+    {
+      "index": 39,
+      "name": "Item{Required}",
+      "converter": {
+        "type": "link",
+        "target": "Item"
+      }
+    },
+    {
+      "index": 40,
+      "name": "IsSpecializationRequired"
+    },
+    {
+      "index": 41,
+      "name": "IsExpert"
+    },
+    {
+      "index": 44,
+      "name": "PatchNumber"
+    }
+  ]
+}
