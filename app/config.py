@@ -6,6 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     folder_path: str = "~/project/ff14/FINAL FANTASY XIV - A Realm Reborn"
+    target_path: str = "./output"
     language: Literal[
         "Japanese",
         "English",

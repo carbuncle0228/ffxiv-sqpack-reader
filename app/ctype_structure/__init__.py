@@ -1,4 +1,5 @@
 # Define ctypes structures for the headers
+from _ctypes import sizeof
 from ctypes import LittleEndianStructure, c_char, c_uint8, c_uint32, c_int16
 
 
@@ -282,3 +283,7 @@ class BlockHeader(LittleEndianStructure):
     @property
     def is_compressed(self):
         return self.compressed_length < 32000
+
+    @classmethod
+    def sizeof(cls) -> int:
+        return sizeof(cls)

@@ -1,7 +1,6 @@
-import io
 import os
-import zlib
 from _ctypes import sizeof
+from datetime import datetime
 
 from app import utils
 from app.ctype_structure import (
@@ -9,10 +8,8 @@ from app.ctype_structure import (
     IndexHeader,
     IndexFileSegment,
     IndexFolderSegment,
-    DataEntryHeader,
-    Type2BlockTable,
-    BlockHeader,
 )
+from app.excel import ex_list
 
 
 class SQPack:
@@ -29,7 +26,16 @@ class SQPack:
 
     def __init__(self, folder_path: str):
         self.folder_path = os.path.normpath(os.path.expanduser(folder_path))
-        self.sqpack_path = os.path.join(self.folder_path, "game", "sqpack", "ffxiv")
+        version_file_path = os.path.join(self.folder_path, "game", "ffxivgame.ver")
+        if os.path.exists(version_file_path):
+            with open(version_file_path, "rb") as version_file:
+                self.game_version = version_file.read().decode("utf-8")
+        else:
+            self.game_version = str(datetime.now())
+        if os.path.exists(os.path.join(self.folder_path, "0a0000.win32.index")):
+            self.sqpack_path = self.folder_path
+        else:
+            self.sqpack_path = os.path.join(self.folder_path, "game", "sqpack", "ffxiv")
         self.index_path = os.path.join(self.sqpack_path, f"{self.exd_file}.index")
         self.init_index()
         self.date_path = os.path.join(self.sqpack_path, f"{self.exd_file}.dat")
@@ -97,38 +103,9 @@ class SQPack:
             utils.compute_crc32(file_name)
         )
 
-        with open(self.date_path + str(file_segment.data_file_id), "rb") as f:
-            f.seek(file_segment.offset)
-            data_entry_header = DataEntryHeader.from_buffer_copy(
-                f.read(sizeof(DataEntryHeader))
-            )
-            block_tables = []
-            for i in range(data_entry_header.num_blocks):
-                block_table = Type2BlockTable.from_buffer_copy(
-                    f.read(sizeof(Type2BlockTable))
-                )
-                block_tables.append(block_table)
-            end_of_header = file_segment.offset + data_entry_header.header_length
-            bytes_io = io.BytesIO()
-            for block_table in block_tables:
-                f.seek(end_of_header + block_table.offset)
-                block_header = BlockHeader.from_buffer_copy(f.read(sizeof(BlockHeader)))
-                block_size = (
-                    block_header.compressed_length
-                    if block_header.is_compressed
-                    else block_header.decompressed_length
-                )
-                if (
-                    block_header.is_compressed
-                    and (block_table.block_size + sizeof(BlockHeader)) % 128 != 0
-                ):
-                    block_size += 128 - ((block_size + sizeof(BlockHeader)) % 128)
-                block_data = f.read(block_table.block_size)
-                if block_header.is_compressed:
-                    block_data = zlib.decompress(block_data, -zlib.MAX_WBITS)
-                bytes_io.write(block_data)
-            bytes_io.seek(0)
-            bytes_io.readline()  # skip header EXLT,2
-            for line in bytes_io:
-                file, id = str(line.strip().decode("utf-8")).split(",")
-                self.files.update({file: int(id)})
+        bytes_io = ex_list.read_file_list(file_segment, self.date_path)
+        bytes_io.seek(0)
+        bytes_io.readline()  # skip header EXLT,2
+        for line in bytes_io:
+            file, id = str(line.strip().decode("utf-8")).split(",")
+            self.files.update({file: int(id)})
