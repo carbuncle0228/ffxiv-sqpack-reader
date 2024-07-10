@@ -11,3 +11,6 @@ lint:
 format:
 	ruff check . --fix
 	ruff format .
+
+bench:
+	pytest app/tests/bench.py

@@ -10,6 +10,11 @@ def compute_crc32(value: str):
     return _compute_crc32_jamcrc(byte_data)
 
 
+def get_file(sqpack, file_path):
+    _folder, file_name = os.path.split(str.lower(file_path))
+    return sqpack.file_keymap.get(compute_crc32(file_name))
+
+
 def _compute_crc32_jamcrc(byte_data):
     crc32_jamcrc = 0xFFFFFFFF - zlib.crc32(byte_data)
 

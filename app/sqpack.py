@@ -10,6 +10,7 @@ from app.ctype_structure import (
     IndexFolderSegment,
 )
 from app.excel import ex_list
+from app.excel.definition import RelationDefinition
 
 
 class SQPack:
@@ -17,12 +18,14 @@ class SQPack:
     sqpack_path: str
     index_path: str
     data_path: str
+    game_version: str
     index_pack_header: SqPackHeader
     index_header: IndexHeader
     folder_keymap: dict[str, IndexFolderSegment] = {}
     file_keymap: dict[str, IndexFileSegment] = {}
     exd_file = "0a0000.win32"
     files: dict[str, int] = {}
+    definition: RelationDefinition
 
     def __init__(self, folder_path: str):
         self.folder_path = os.path.normpath(os.path.expanduser(folder_path))
@@ -38,9 +41,10 @@ class SQPack:
             self.sqpack_path = os.path.join(self.folder_path, "game", "sqpack", "ffxiv")
         self.index_path = os.path.join(self.sqpack_path, f"{self.exd_file}.index")
         self.init_index()
-        self.date_path = os.path.join(self.sqpack_path, f"{self.exd_file}.dat")
+        self.data_path = os.path.join(self.sqpack_path, f"{self.exd_file}.dat")
 
         self.init_data()
+        self.init_def()
 
     @staticmethod
     def print_sqpack_header(header: SqPackHeader):
@@ -98,14 +102,14 @@ class SQPack:
 
     def init_data(self):
         root_path = "exd/root.exl"
-        _folder, file_name = os.path.split(root_path)
-        file_segment: IndexFileSegment = self.file_keymap.get(
-            utils.compute_crc32(file_name)
-        )
 
-        bytes_io = ex_list.read_file_list(file_segment, self.date_path)
+        file_segment: IndexFileSegment = utils.get_file(self, root_path)
+        bytes_io = ex_list.read_file_list(file_segment, self.data_path)
         bytes_io.seek(0)
         bytes_io.readline()  # skip header EXLT,2
         for line in bytes_io:
             file, id = str(line.strip().decode("utf-8")).split(",")
             self.files.update({file: int(id)})
+
+    def init_def(self):
+        self.definition = RelationDefinition()

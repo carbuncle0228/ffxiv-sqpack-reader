@@ -1,6 +1,15 @@
 # Define ctypes structures for the headers
 from _ctypes import sizeof
-from ctypes import LittleEndianStructure, c_char, c_uint8, c_uint32, c_int16
+from ctypes import (
+    BigEndianStructure,
+    LittleEndianStructure,
+    c_char,
+    c_uint8,
+    c_uint32,
+    c_int16,
+    c_uint16,
+)
+from enum import Enum
 
 
 class SqPackHeader(LittleEndianStructure):
@@ -287,3 +296,95 @@ class BlockHeader(LittleEndianStructure):
     @classmethod
     def sizeof(cls) -> int:
         return sizeof(cls)
+
+
+class ExhHeader(BigEndianStructure):
+    """
+    https://xiv.dev/game-data/file-formats/excel#excel-header-.exh
+
+    """
+
+    _fields_ = (
+        (
+            "magic",
+            c_char * 4,
+        ),  #  The magic is always EXHF. If it's not, the file is probably not the file you're trying to read.
+        ("unknown", c_uint16),
+        ("data_offset", c_uint16),
+        ("column_count", c_uint16),
+        ("page_count", c_uint16),
+        ("language_count", c_uint16),
+        ("unknown1", c_uint16),
+        ("u2", c_uint8),
+        ("variant", c_uint8),
+        ("u3", c_uint16),
+        ("row_count", c_uint32),
+        ("u4", c_uint32 * 2),
+    )
+
+    # Optional: Adding properties to access fields as attributes
+    @property
+    def magic(self):
+        return self.magic
+
+    @property
+    def data_offset(self):
+        return self.data_offset
+
+    @property
+    def column_count(self):
+        return self.column_count
+
+    @property
+    def page_count(self):
+        return self.page_count
+
+    @property
+    def language_count(self):
+        return self.language_count
+
+    @property
+    def variant(self):
+        return self.variant
+
+    @property
+    def row_count(self):
+        return self.row
+
+
+class ExcelColumnDataType(Enum):
+    String = 0x0
+    Bool = 0x1
+    Int8 = 0x2
+    UInt8 = 0x3
+    Int16 = 0x4
+    UInt16 = 0x5
+    Int32 = 0x6
+    UInt32 = 0x7
+    Float32 = 0x9
+    Int64 = 0xA
+    UInt64 = 0xB
+    # // 0 is read like data & 1, 1 is like data & 2, 2 = data & 4, etc...
+    PackedBool0 = 0x19
+    PackedBool1 = 0x1A
+    PackedBool2 = 0x1B
+    PackedBool3 = 0x1C
+    PackedBool4 = 0x1D
+    PackedBool5 = 0x1E
+    PackedBool6 = 0x1F
+    PackedBool7 = 0x20
+
+
+class ExcelColumnDefinition(BigEndianStructure):
+    _fields_ = (
+        ("_type", c_uint16),
+        ("offset", c_uint16),
+    )
+
+    @property
+    def type(self) -> ExcelColumnDataType:
+        return ExcelColumnDataType(self._type)
+
+    @property
+    def offset(self):
+        return self.offset
