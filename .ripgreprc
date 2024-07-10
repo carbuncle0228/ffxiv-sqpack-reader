@@ -1,0 +1,17 @@
+# Search hidden files / directories (e.g. dotfiles) by default
+--hidden
+
+--no-heading
+--with-filename
+--line-number
+--column
+--no-ignore
+# Using glob patterns to include/exclude files or folders
+--glob=!.git/*
+--glob=!.idea/*
+--glob=!.*_cache*
+--glob=!*pycache*
+--glob=!.*venv*
+--glob=!output*
+# Because who cares about case!?
+--smart-case
