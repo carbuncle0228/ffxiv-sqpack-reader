@@ -33,4 +33,5 @@ def read_file_data(f, file_segment):
         if block_header.is_compressed:
             block_data = zlib.decompress(block_data, -zlib.MAX_WBITS)
         bytes_io.write(block_data)
+    bytes_io.seek(0)
     return bytes_io

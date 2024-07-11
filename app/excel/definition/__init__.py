@@ -10,7 +10,6 @@ from app.excel.definition.sheet import SheetDefinition
 class RelationDefinition:
     sheet_definitions: list[SheetDefinition] = []
     sheet_map: dict[str, SheetDefinition] = {}
-    sheet_def_map: dict[str, SheetDefinition] = {}
 
     def __init__(self):
         for file_path in glob.glob(os.path.normpath("./Definitions/*.json")):

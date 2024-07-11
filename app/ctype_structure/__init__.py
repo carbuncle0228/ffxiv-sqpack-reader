@@ -1,5 +1,7 @@
 # Define ctypes structures for the headers
-from _ctypes import sizeof
+import io
+import os
+from _ctypes import sizeof, Structure
 from ctypes import (
     BigEndianStructure,
     LittleEndianStructure,
@@ -8,8 +10,15 @@ from ctypes import (
     c_uint32,
     c_int16,
     c_uint16,
+    c_bool,
+    c_int8,
+    c_int32,
+    c_float,
+    c_int64,
+    c_uint64,
 )
 from enum import Enum
+from io import BytesIO
 
 
 class SqPackHeader(LittleEndianStructure):
@@ -298,6 +307,20 @@ class BlockHeader(LittleEndianStructure):
         return sizeof(cls)
 
 
+class ExcelVariant(Enum):
+    Unknown = 0
+    Default = 1
+    SubRows = 2
+
+    @staticmethod
+    def from_value(value):
+        return {
+            0: ExcelVariant.Unknown,
+            1: ExcelVariant.Default,
+            2: ExcelVariant.SubRows,
+        }.get(value, ExcelVariant.Unknown)
+
+
 class ExhHeader(BigEndianStructure):
     """
     https://xiv.dev/game-data/file-formats/excel#excel-header-.exh
@@ -322,7 +345,10 @@ class ExhHeader(BigEndianStructure):
         ("u4", c_uint32 * 2),
     )
 
-    # Optional: Adding properties to access fields as attributes
+    @classmethod
+    def copy(cls, bytes_io) -> "ExhHeader":
+        return cls.from_buffer_copy(bytes_io.read(sizeof(cls)))
+
     @property
     def magic(self):
         return self.magic
@@ -346,6 +372,10 @@ class ExhHeader(BigEndianStructure):
     @property
     def variant(self):
         return self.variant
+
+    @property
+    def variant_name(self) -> ExcelVariant:
+        return ExcelVariant.from_value(self.variant)
 
     @property
     def row_count(self):
@@ -375,11 +405,83 @@ class ExcelColumnDataType(Enum):
     PackedBool7 = 0x20
 
 
+PackedBoolTypes = {}
+for i in range(8):
+    class_name = f"PackedBoolType{i}"
+    class_dict = {
+        "_fields_": [("_value", c_bool)],
+        "value": property(lambda self, idx=i: bool(self._value & (1 << idx))),
+    }
+    PackedBoolTypes[i] = type(class_name, (Structure,), class_dict)
+
+type_mapping = {
+    ExcelColumnDataType.String: c_uint32,
+    ExcelColumnDataType.Bool: PackedBoolTypes[0],
+    ExcelColumnDataType.Int8: c_int8,
+    ExcelColumnDataType.UInt8: c_uint8,
+    ExcelColumnDataType.Int16: c_int16,
+    ExcelColumnDataType.UInt16: c_uint16,
+    ExcelColumnDataType.Int32: c_int32,
+    ExcelColumnDataType.UInt32: c_uint32,
+    ExcelColumnDataType.Float32: c_float,
+    ExcelColumnDataType.Int64: c_int64,
+    ExcelColumnDataType.UInt64: c_uint64,
+    ExcelColumnDataType.PackedBool0: PackedBoolTypes[0],
+    ExcelColumnDataType.PackedBool1: PackedBoolTypes[1],
+    ExcelColumnDataType.PackedBool2: PackedBoolTypes[2],
+    ExcelColumnDataType.PackedBool3: PackedBoolTypes[3],
+    ExcelColumnDataType.PackedBool4: PackedBoolTypes[4],
+    ExcelColumnDataType.PackedBool5: PackedBoolTypes[5],
+    ExcelColumnDataType.PackedBool6: PackedBoolTypes[6],
+    ExcelColumnDataType.PackedBool7: PackedBoolTypes[7],
+}
+
+
+def create_dynamic_structure(type_list):
+    field_defs = []
+    for type in type_list:
+        data_type = type["type"]
+        index = type["index"]
+        if data_type in type_mapping:
+            field_defs.append((f"field_{index}", type_mapping[data_type]))
+
+        else:
+            raise ValueError(f"Unsupported data type: {data_type}")
+
+    class DynamicStruct(BigEndianStructure):
+        _fields_ = field_defs
+
+    return DynamicStruct
+
+
+def create_fake_dynamic_structure(fields):
+
+    def from_buffer_copy(cls, buffer:io.BytesIO):
+        instance = cls()
+        for field in fields:
+            field_name = f"field_{field.index}"
+            field_type = type_mapping.get(field.type, c_bool)
+            setattr(instance, field_name, field_type.from_buffer_copy(buffer, field.offset).value)
+        return instance
+
+    class_dict = {
+        'from_buffer_copy': classmethod(from_buffer_copy)
+    }
+
+    # Create the class using type()
+    dynamic_class = type("FakeDynamicStruct", (object,), class_dict)
+    return dynamic_class
+
 class ExcelColumnDefinition(BigEndianStructure):
     _fields_ = (
         ("_type", c_uint16),
         ("offset", c_uint16),
     )
+    index: int  # monkey patch assign index
+
+    @classmethod
+    def copy(cls, bytes_io) -> "ExcelColumnDefinition":
+        return cls.from_buffer_copy(bytes_io.read(sizeof(cls)))
 
     @property
     def type(self) -> ExcelColumnDataType:
@@ -388,3 +490,74 @@ class ExcelColumnDefinition(BigEndianStructure):
     @property
     def offset(self):
         return self.offset
+
+
+class ExcelDataPagination(BigEndianStructure):
+    _fields_ = (
+        ("start_id", c_uint32),
+        ("row_count", c_uint32),
+    )
+
+    @classmethod
+    def copy(cls, bytes_io) -> "ExcelDataPagination":
+        return cls.from_buffer_copy(bytes_io.read(sizeof(cls)))
+
+    @property
+    def start_id(self) -> int:
+        return self.start_id
+
+    @property
+    def row_count(self):
+        return self.row_count
+
+
+class ExcelDataHeader(BigEndianStructure):
+    index_size: int
+    magic: str
+    _fields_ = [
+        ("magic", c_char * 4),
+        ("version", c_uint16),
+        ("unknown1", c_uint16),
+        ("index_size", c_uint32),
+        ("unknown2", c_uint32 * 5),
+    ]
+
+    @classmethod
+    def copy(cls, bytes_io) -> "ExcelDataHeader":
+        return cls.from_buffer_copy(bytes_io.read(sizeof(cls)))
+
+
+# Structure for ExcelDataOffset
+class ExcelDataOffset(BigEndianStructure):
+    row_id: int
+    offset: int
+    _fields_ = [("row_id", c_uint32), ("offset", c_uint32)]
+
+    @classmethod
+    def copy(cls, bytes_io) -> "ExcelDataOffset":
+        return cls.from_buffer_copy(bytes_io.read(sizeof(cls)))
+
+
+# Structure for ExcelDataRowHeader
+class ExcelDataRowHeader(BigEndianStructure):
+    data_size: int
+    row_count: int
+    _fields_ = [("data_size", c_uint32), ("row_count", c_uint16)]
+
+    @classmethod
+    def copy(cls, bytes_io: BytesIO) -> "ExcelDataRowHeader":
+        size = sizeof(cls)
+        size_without_padding = cls.size_without_padding()
+        instance = cls.from_buffer_copy(bytes_io.read(size))
+        bytes_io.seek(-(size - size_without_padding), os.SEEK_CUR)
+        return instance
+
+    @classmethod
+    def size_without_padding(cls) -> int:
+        """
+        sizeof(cls) == 8 with padding 2
+        """
+        size_without_padding = sum(
+            sizeof(field_type) for field_name, field_type in cls._fields_
+        )
+        return size_without_padding

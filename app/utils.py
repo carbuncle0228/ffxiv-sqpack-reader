@@ -10,9 +10,9 @@ def compute_crc32(value: str):
     return _compute_crc32_jamcrc(byte_data)
 
 
-def get_file(sqpack, file_path):
+def get_file(file_keymap: dict, file_path):
     _folder, file_name = os.path.split(str.lower(file_path))
-    return sqpack.file_keymap.get(compute_crc32(file_name))
+    return file_keymap.get(compute_crc32(file_name))
 
 
 def _compute_crc32_jamcrc(byte_data):

@@ -103,9 +103,8 @@ class SQPack:
     def init_data(self):
         root_path = "exd/root.exl"
 
-        file_segment: IndexFileSegment = utils.get_file(self, root_path)
+        file_segment: IndexFileSegment = utils.get_file(self.file_keymap, root_path)
         bytes_io = ex_list.read_file_list(file_segment, self.data_path)
-        bytes_io.seek(0)
         bytes_io.readline()  # skip header EXLT,2
         for line in bytes_io:
             file, id = str(line.strip().decode("utf-8")).split(",")
