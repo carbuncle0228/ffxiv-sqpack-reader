@@ -131,3 +131,5 @@ dmypy.json
 
 .tool-versions
 output/*
+000000.win32*
+0a0000.win32*
