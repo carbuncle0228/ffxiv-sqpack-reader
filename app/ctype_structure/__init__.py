@@ -1,20 +1,20 @@
 # Define ctypes structures for the headers
 import io
 import os
-from _ctypes import sizeof, Structure
+from _ctypes import Structure, sizeof
 from ctypes import (
     BigEndianStructure,
     LittleEndianStructure,
-    c_char,
-    c_uint8,
-    c_uint32,
-    c_int16,
-    c_uint16,
     c_bool,
-    c_int8,
-    c_int32,
+    c_char,
     c_float,
+    c_int8,
+    c_int16,
+    c_int32,
     c_int64,
+    c_uint8,
+    c_uint16,
+    c_uint32,
     c_uint64,
 )
 from enum import Enum
@@ -455,22 +455,24 @@ def create_dynamic_structure(type_list):
 
 
 def create_fake_dynamic_structure(fields):
-
-    def from_buffer_copy(cls, buffer:io.BytesIO):
+    def from_buffer_copy(cls, buffer: io.BytesIO):
         instance = cls()
         for field in fields:
             field_name = f"field_{field.index}"
             field_type = type_mapping.get(field.type, c_bool)
-            setattr(instance, field_name, field_type.from_buffer_copy(buffer, field.offset).value)
+            setattr(
+                instance,
+                field_name,
+                field_type.from_buffer_copy(buffer, field.offset).value,
+            )
         return instance
 
-    class_dict = {
-        'from_buffer_copy': classmethod(from_buffer_copy)
-    }
+    class_dict = {"from_buffer_copy": classmethod(from_buffer_copy)}
 
     # Create the class using type()
     dynamic_class = type("FakeDynamicStruct", (object,), class_dict)
     return dynamic_class
+
 
 class ExcelColumnDefinition(BigEndianStructure):
     _fields_ = (

@@ -4,10 +4,10 @@ from datetime import datetime
 
 from app import utils
 from app.ctype_structure import (
-    SqPackHeader,
-    IndexHeader,
     IndexFileSegment,
     IndexFolderSegment,
+    IndexHeader,
+    SqPackHeader,
 )
 from app.excel import ex_list
 from app.excel.definition import RelationDefinition
@@ -34,7 +34,7 @@ class SQPack:
             with open(version_file_path, "rb") as version_file:
                 self.game_version = version_file.read().decode("utf-8")
         else:
-            self.game_version = str(datetime.now())
+            self.game_version = f"{datetime.now():%Y%m%d%H%M%S}"
         if os.path.exists(os.path.join(self.folder_path, "0a0000.win32.index")):
             self.sqpack_path = self.folder_path
         else:

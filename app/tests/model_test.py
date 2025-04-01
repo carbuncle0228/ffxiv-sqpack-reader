@@ -1,6 +1,6 @@
 from _ctypes import sizeof
 
-from app.ctype_structure import SqPackHeader, IndexHeader
+from app.ctype_structure import IndexHeader, SqPackHeader
 from app.tests import calculate_sha1
 
 
