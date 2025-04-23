@@ -1,3 +1,4 @@
+from app.se_string import format
 from app.se_string.cursor import SliceCursor
 from app.se_string.error import InvalidMacroError, InvalidTextError
 from app.se_string.expression import Expression
@@ -34,34 +35,21 @@ class MacroPayload:
         self.kind = kind
         self.bytes = bytes_data
 
-    def expressions(self):
-        return Expressions(self.bytes)
+    def args(self):
+        return SliceCursor(self.bytes)
 
     def __repr__(self):
         return f"MacroPayload({self.kind}, {self.bytes})"
 
     def format(self) -> str:
         try:
-            return f"Macro_{self.kind.name}({self.bytes})"
+            return format.format_macro(self)
+
         except UnicodeDecodeError:
             raise InvalidTextError
 
     def __str__(self):
         return self.format()
-
-
-class Expressions:
-    def __init__(self, data):
-        self.cursor = SliceCursor(data)
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        if self.cursor.eof():
-            raise StopIteration
-
-        return Expression.read(self.cursor)
 
 
 class PayloadReader:
@@ -81,11 +69,11 @@ class PayloadReader:
             kind = MacroKind(self.cursor.next())
 
             expr = Expression.read(self.cursor)
-            if not isinstance(expr, Expression) or expr.type != Expression.Type.U32:
+            if not isinstance(expr, Expression):
                 raise InvalidMacroError()
 
             length = expr.value
-            body_length = length  # No need for 16-bit system check in Python
+            body_length = length
 
             body = self.cursor.take(body_length)
 

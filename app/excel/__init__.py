@@ -2,7 +2,7 @@ import io
 import zlib
 from _ctypes import sizeof
 
-from app.ctype_structure import Type2BlockTable, DataEntryHeader, BlockHeader
+from app.ctype_structure import BlockHeader, DataEntryHeader, Type2BlockTable
 
 
 def read_file_data(f, file_segment):

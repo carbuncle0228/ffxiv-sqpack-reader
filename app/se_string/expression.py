@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Optional, Union
 
 from app import se_string
+from app.se_string import cursor
 from app.se_string.error import InvalidExpressionError
 
 
@@ -31,13 +32,17 @@ class Expression:
         Unknown = "Unknown"
 
     def __init__(
-        self, type_: Type, value: Optional[Union[int, "Expression", tuple]] = None
+        self,
+        type_: Type,
+        value: Optional[
+            Union[int, "Expression", "se_string.SeString", tuple, bytes]
+        ] = None,
     ):
         self.type = type_
         self.value = value
 
     @classmethod
-    def read(cls, cursor: se_string.cursor.SliceCursor):
+    def read(cls, cursor: cursor.SliceCursor):
         kind = cursor.next()
         if kind is None:
             raise InvalidExpressionError
@@ -88,7 +93,10 @@ class Expression:
         elif 0xF0 <= kind <= 0xFE:
             return cls(cls.Type.U32, read_packed_u32(cursor, kind))
         elif kind == 0xFF:
-            return cls(cls.Type.SeString, read_inline_sestring(cursor))
+            return cls(
+                cls.Type.SeString,
+                se_string.SeString(cursor.take(count=cursor.data_size)),
+            )
         else:
             return cls(cls.Type.Unknown, kind)
 
@@ -102,7 +110,11 @@ def read_packed_u32(cursor: se_string.cursor.SliceCursor, kind: int) -> int:
     return int.from_bytes(bytes_, "little")
 
 
-def read_inline_sestring(cursor: se_string.cursor.SliceCursor):
+def read_bytes(cursor: se_string.cursor.SliceCursor, kind: int) -> bytes:
+    return bytes([kind]) + cursor.get_all()
+
+
+def read_inline_sestring(cursor: se_string.cursor.SliceCursor) -> se_string.SeString:
     expr = Expression.read(cursor)
     if not isinstance(expr, Expression) or expr.type != Expression.Type.U32:
         raise InvalidExpressionError

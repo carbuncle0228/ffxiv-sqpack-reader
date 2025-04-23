@@ -16,7 +16,8 @@ class SeString:
         reader = PayloadReader(self.data)
         try:
             return [payload for payload in reader]
-        except SeStringError:
+        except SeStringError as e:
+            logging.exception(e, exc_info=True)
             return "invalid SeString"
         except Exception as e:
             logging.exception(e, exc_info=True)
@@ -27,7 +28,9 @@ class SeString:
 
         try:
             return "".join(str(payload) for payload in reader)
-        except SeStringError:
+        except SeStringError as e:
+            logging.exception(e, exc_info=True)
+
             return "invalid SeString"
         except Exception as e:
             logging.exception(e, exc_info=True)

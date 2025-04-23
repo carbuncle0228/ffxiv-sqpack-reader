@@ -66,5 +66,8 @@ class SliceCursor:
     def get_offset(self):
         return self.buffer.tell()
 
+    def get_all(self):
+        return self.buffer.read()
+
     def __repr__(self):
         return f"SliceCursor(size={self.data_size}, offset={self.buffer.tell()})"

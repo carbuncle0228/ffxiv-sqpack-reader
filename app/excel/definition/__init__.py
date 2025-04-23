@@ -2,7 +2,7 @@ import glob
 import logging
 import os
 
-from orjson import JSONDecodeError, orjson
+import orjson
 
 from app.excel.definition.sheet import SheetDefinition
 
@@ -13,12 +13,12 @@ class RelationDefinition:
 
     def __init__(self):
         for file_path in glob.glob(os.path.normpath("./Definitions/*.json")):
-            with open(file_path, "r") as file:
+            with open(file_path, "r", encoding="utf-8") as file:
                 def_json = file.read()
                 try:
                     obj = orjson.loads(def_json)
                     self.sheet_definitions.append(SheetDefinition.from_json(obj))
-                except JSONDecodeError as e:
+                except orjson.JSONDecodeError as e:
                     logging.error(e, exc_info=True)
         self.compile()
 

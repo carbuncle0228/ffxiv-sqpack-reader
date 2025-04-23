@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import List
 
 
 class IDataDefinition(ABC):
@@ -53,7 +52,7 @@ class SingleDataDefinition(IDataDefinition):
 
 
 class GroupDataDefinition(IDataDefinition):
-    def __init__(self, members: List[IDataDefinition] = None):
+    def __init__(self, members: list[IDataDefinition] = None):
         self.members = members if members else []
         self.length = sum(member.length for member in self.members)
 

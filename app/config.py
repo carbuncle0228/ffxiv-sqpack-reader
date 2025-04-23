@@ -17,14 +17,18 @@ class Settings(BaseSettings):
         "Korean",
     ] = "English"
 
-    GP_MODE: bool = False
+    ONLY_STR_MODE: bool = False
+
+    HEX_STR_MODE: bool = False
 
     log_level: str = "DEBUG"
 
     model_config = SettingsConfigDict(
         case_sensitive=True,
-        env_file=f"./config/{os.environ.get('ENV','')}.env",
+        env_file=f"./config/{os.environ.get('ENV', '')}.env",
     )
+
+    DEBUG_SKIP: bool = False
 
 
 settings = Settings()
