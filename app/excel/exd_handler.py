@@ -20,7 +20,7 @@ from app.sqpack import SQPack
 
 
 def write_csv(sqpack: SQPack, target_folder, file_path):
-    if file_path not in {"ActionTransient"} and settings.DEBUG_SKIP:
+    if file_path not in {"Addon"} and settings.DEBUG_SKIP:
         return  # TODO debug
     target_path = os.path.join(
         target_folder, os.path.normpath(f"rawexd/{file_path}.csv")
@@ -60,8 +60,12 @@ def write_csv(sqpack: SQPack, target_folder, file_path):
             exd_header = ExcelDataHeader.copy(bytes_io)
             if exd_header.index_size == 0:
                 return
-            exd_offset = ExcelDataOffset.copy(bytes_io)
-            bytes_io.seek(exd_offset.offset)
+
+            exd_key_list = [
+                ExcelDataOffset.copy(bytes_io)
+                for _ in range(exd_header.index_size // sizeof(ExcelDataOffset))
+            ]
+            bytes_io.seek(exd_key_list[0].offset)
             data_size = exh_header.data_offset
             ColumnStruct = create_dynamic_structure(
                 [
@@ -73,7 +77,7 @@ def write_csv(sqpack: SQPack, target_folder, file_path):
                 ColumnStruct = create_fake_dynamic_structure(columns)
             if exh_header.variant_name == ExcelVariant.Default:
                 for i in range(exd_header.index_size // sizeof(ExcelDataOffset)):
-                    row_str = f"{i}"
+                    row_str = f"{exd_key_list[i].row_id}"
                     exd_row_header = ExcelDataRowHeader.copy(bytes_io)
                     fixed_data = bytes_io.read(data_size)
                     column_struct = ColumnStruct.from_buffer_copy(fixed_data)
@@ -89,7 +93,7 @@ def write_csv(sqpack: SQPack, target_folder, file_path):
                                 parsed_str = str(SeString(str_column))
                                 row_str += f",{parsed_str}"
                             else:
-                                row_str += f",{str_column.decode('utf-8')}"  # todo add ffxiv string decorder
+                                row_str += f",{str_column.decode('utf-8')}"
                             current_string_index += 1
                         elif settings.ONLY_STR_MODE:
                             # only write string skip other type
