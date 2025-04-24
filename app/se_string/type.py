@@ -1,4 +1,4 @@
-from enum import IntEnum
+from enum import IntEnum, StrEnum
 
 
 class MacroKind(IntEnum):
@@ -58,3 +58,29 @@ class MacroKind(IntEnum):
     SOUND = 0x60
     LEVEL_POS = 0x61
     UNKNOWN = 0xFF
+
+
+class ExpressionType(StrEnum):
+    U32 = "U32"
+    U32Packed = "U32Packed"
+    SeString = "SeString"
+    Millisecond = "Millisecond"
+    Second = "Second"
+    Minute = "Minute"
+    Hour = "Hour"
+    Day = "Day"
+    Weekday = "Weekday"
+    Month = "Month"
+    Year = "Year"
+    StackColor = "StackColor"
+    LocalNumber = "LocalNumber"
+    GlobalNumber = "GlobalNumber"
+    LocalString = "LocalString"
+    GlobalString = "GlobalString"
+    Ge = "Ge"
+    Gt = "Gt"
+    Le = "Le"
+    Lt = "Lt"
+    Eq = "Eq"
+    Ne = "Ne"
+    Unknown = "Unknown"

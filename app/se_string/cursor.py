@@ -71,3 +71,11 @@ class SliceCursor:
 
     def __repr__(self):
         return f"SliceCursor(size={self.data_size}, offset={self.buffer.tell()})"
+
+    def read_packed_u32(self, kind: int) -> int:
+        flags = (kind + 1) & 0b1111
+        bytes_ = [0] * 4
+        for i in reversed(range(4)):
+            if flags & (1 << i):
+                bytes_[i] = self.next() or 0
+        return int.from_bytes(bytes_, "little")
