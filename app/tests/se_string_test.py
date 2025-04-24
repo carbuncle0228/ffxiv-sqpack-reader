@@ -1,4 +1,7 @@
+import random
+
 from app.se_string import SeString
+from app.se_string.packed import read_packed_u32, write_packed_u32
 
 
 def Macro_HYPHEN(arg):
@@ -53,3 +56,14 @@ def test_se_string_italic():
         evaluated_value
         == "Obtain a complete set of harlequin armor consisting of a harlequin's cap, a harlequin's acton, and a pair of harlequin's tights.<hex:02100103>※Speak to Jonathas in Old Gridania with all three items equipped."
     )
+
+
+def test_packed_u32():
+    max_u32 = (1 << 32) - 1
+    test_value = [max_u32, 0, random.choice(range(max_u32))]
+    for i in test_value:
+        packed_u32 = write_packed_u32(i)
+        kind = packed_u32[0]
+        cursor_bytes = packed_u32[1:]
+        res = read_packed_u32(cursor_bytes, kind)
+        assert res == i
