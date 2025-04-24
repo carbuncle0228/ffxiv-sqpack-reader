@@ -17,7 +17,6 @@ from app.excel import ex_header, read_file_data
 from app.model import Languages
 from app.se_string import SeString
 from app.sqpack import SQPack
-from debug import language_files, non_language_files, variant1_files, variant2_files
 
 
 def write_csv(sqpack: SQPack, target_folder, file_path):
@@ -52,11 +51,8 @@ def write_csv(sqpack: SQPack, target_folder, file_path):
         sorted_columns = sorted(columns, key=lambda c: c.offset)
 
         if exh_header.language_count > 1:
-            language_files.add(file_path)
-
             data_path = f"exd/{file_path}_{data_pagination.start_id}_{Languages[settings.language].value}.exd"
         else:
-            non_language_files.add(file_path)
             data_path = f"exd/{file_path}_{data_pagination.start_id}.exd"
         file_segment: IndexFileSegment = utils.get_file(sqpack.file_keymap, data_path)
         with open(sqpack.data_path + str(file_segment.data_file_id), "rb") as f:
@@ -76,7 +72,6 @@ def write_csv(sqpack: SQPack, target_folder, file_path):
             if sizeof(ColumnStruct) > data_size:
                 ColumnStruct = create_fake_dynamic_structure(columns)
             if exh_header.variant_name == ExcelVariant.Default:
-                variant1_files.add(file_path)
                 for i in range(exd_header.index_size // sizeof(ExcelDataOffset)):
                     row_str = f"{i}"
                     exd_row_header = ExcelDataRowHeader.copy(bytes_io)
@@ -114,4 +109,4 @@ def write_csv(sqpack: SQPack, target_folder, file_path):
                     )
 
             else:
-                variant2_files.add(file_path)
+                pass

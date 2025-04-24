@@ -2,10 +2,15 @@ import io
 import zlib
 from _ctypes import sizeof
 
-from app.ctype_structure import BlockHeader, DataEntryHeader, Type2BlockTable
+from app.ctype_structure import (
+    BlockHeader,
+    DataEntryHeader,
+    IndexFileSegment,
+    Type2BlockTable,
+)
 
 
-def read_file_data(f, file_segment):
+def read_file_data(f: io.BufferedReader, file_segment: IndexFileSegment) -> io.BytesIO:
     bytes_io = io.BytesIO()
     f.seek(file_segment.offset)
     data_entry_header = DataEntryHeader.from_buffer_copy(

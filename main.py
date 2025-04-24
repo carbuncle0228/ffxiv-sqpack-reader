@@ -6,7 +6,6 @@ from tqdm import tqdm
 from app.config import settings
 from app.excel import exd_handler
 from app.sqpack import SQPack
-from debug import language_files, non_language_files, variant1_files, variant2_files
 
 logging.basicConfig(
     format="%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s",
@@ -38,14 +37,3 @@ for file_path in tqdm(sqpack.files.keys()):
     success_count += 1
 
 logging.info(f"{success_count} files exported, {fail_count} failed")
-
-logging.debug("language_files")
-logging.debug(language_files)
-logging.debug("non_language_files")
-logging.debug(non_language_files)
-logging.debug("variant1_files")
-logging.debug(variant1_files)
-logging.debug("variant2_files")
-logging.debug(variant2_files)
-logging.debug("language_files but not in variant1")
-logging.debug(language_files.difference(variant1_files))

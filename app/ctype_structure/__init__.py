@@ -346,7 +346,7 @@ class ExhHeader(BigEndianStructure):
     )
 
     @classmethod
-    def copy(cls, bytes_io) -> "ExhHeader":
+    def copy(cls, bytes_io: BytesIO) -> "ExhHeader":
         return cls.from_buffer_copy(bytes_io.read(sizeof(cls)))
 
     @property
@@ -482,7 +482,7 @@ class ExcelColumnDefinition(BigEndianStructure):
     index: int  # monkey patch assign index
 
     @classmethod
-    def copy(cls, bytes_io) -> "ExcelColumnDefinition":
+    def copy(cls, bytes_io: BytesIO) -> "ExcelColumnDefinition":
         return cls.from_buffer_copy(bytes_io.read(sizeof(cls)))
 
     @property
@@ -501,7 +501,7 @@ class ExcelDataPagination(BigEndianStructure):
     )
 
     @classmethod
-    def copy(cls, bytes_io) -> "ExcelDataPagination":
+    def copy(cls, bytes_io: BytesIO) -> "ExcelDataPagination":
         return cls.from_buffer_copy(bytes_io.read(sizeof(cls)))
 
     @property
@@ -525,7 +525,7 @@ class ExcelDataHeader(BigEndianStructure):
     ]
 
     @classmethod
-    def copy(cls, bytes_io) -> "ExcelDataHeader":
+    def copy(cls, bytes_io: BytesIO) -> "ExcelDataHeader":
         return cls.from_buffer_copy(bytes_io.read(sizeof(cls)))
 
 
@@ -536,7 +536,7 @@ class ExcelDataOffset(BigEndianStructure):
     _fields_ = [("row_id", c_uint32), ("offset", c_uint32)]
 
     @classmethod
-    def copy(cls, bytes_io) -> "ExcelDataOffset":
+    def copy(cls, bytes_io: BytesIO) -> "ExcelDataOffset":
         return cls.from_buffer_copy(bytes_io.read(sizeof(cls)))
 
 
