@@ -1,3 +1,4 @@
+import csv
 import os
 from _ctypes import sizeof
 
@@ -30,10 +31,11 @@ def write_csv(sqpack: SQPack, target_folder, file_path):
         return  # only write file have multiple language
     os.makedirs(os.path.dirname(target_path), exist_ok=True)
     with open(target_path, "w", buffering=1024 * 1024 * 8, encoding="utf-8") as file:
-        key_str = "key"
-        header_str = "#"
-        offset_str = "offset"
-        type_str = "int32"
+        csv_writer = csv.writer(file, delimiter=",")
+        key_row = ["key"]
+        header_row = ["#"]
+        offset_row = ["offset"]
+        type_row = ["int32"]
         sheet_map = sqpack.definition.sheet_map.get(file_path)
         column_index_to_name_map = (
             sheet_map.column_index_to_name_map if sheet_map else {}
@@ -41,13 +43,15 @@ def write_csv(sqpack: SQPack, target_folder, file_path):
         for i, column in enumerate(columns):
             if settings.ONLY_STR_MODE and column.type.name != "String":
                 continue  # only string
-            key_str += f",{i}"
-            header_str += f",{column_index_to_name_map.get(i, '')}"
-            offset_str += f",{column.offset}"
-            type_str += f",{column.type.name}"
-        file.writelines(
-            [key_str, "\n", header_str, "\n", offset_str, "\n", type_str, "\n"]
-        )
+            key_row += [f"{i}"]
+            header_row += [f"{column_index_to_name_map.get(i, '')}"]
+            offset_row += [f"{column.offset}"]
+            type_row += [f"{column.type.name}"]
+        csv_writer.writerow(key_row)
+        csv_writer.writerow(header_row)
+        csv_writer.writerow(offset_row)
+        csv_writer.writerow(type_row)
+
         sorted_columns = sorted(columns, key=lambda c: c.offset)
 
         if exh_header.language_count > 1:
@@ -77,7 +81,7 @@ def write_csv(sqpack: SQPack, target_folder, file_path):
                 ColumnStruct = create_fake_dynamic_structure(columns)
             if exh_header.variant_name == ExcelVariant.Default:
                 for i in range(exd_header.index_size // sizeof(ExcelDataOffset)):
-                    row_str = f"{exd_key_list[i].row_id}"
+                    exd_row = [f"{exd_key_list[i].row_id}"]
                     exd_row_header = ExcelDataRowHeader.copy(bytes_io)
                     fixed_data = bytes_io.read(data_size)
                     column_struct = ColumnStruct.from_buffer_copy(fixed_data)
@@ -91,9 +95,9 @@ def write_csv(sqpack: SQPack, target_folder, file_path):
                             str_column = str_columns[current_string_index]
                             if b"\02" in str_column:
                                 parsed_str = str(SeString(str_column))
-                                row_str += f",{parsed_str}"
+                                exd_row += [f"{parsed_str}"]
                             else:
-                                row_str += f",{str_column.decode('utf-8')}"
+                                exd_row += [f"{str_column.decode('utf-8')}"]
                             current_string_index += 1
                         elif settings.ONLY_STR_MODE:
                             # only write string skip other type
@@ -102,15 +106,10 @@ def write_csv(sqpack: SQPack, target_folder, file_path):
                             "PackedBool" in column.type.name
                             and type(column_struct).__name__ == "DynamicStruct"
                         ):
-                            row_str += f",{getattr(column_struct, f'field_{j}').value}"
+                            exd_row += [f"{getattr(column_struct, f'field_{j}').value}"]
                         else:
-                            row_str += f",{getattr(column_struct, f'field_{j}')}"
-                    file.writelines(
-                        [
-                            row_str,
-                            "\n",
-                        ]
-                    )
+                            exd_row += [f"{getattr(column_struct, f'field_{j}')}"]
+                    csv_writer.writerow(exd_row)
 
             else:
                 pass
