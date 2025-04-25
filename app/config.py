@@ -20,9 +20,9 @@ class Settings(BaseSettings):
         "Korean",
     ] = "English"
 
-    ONLY_STR_MODE: bool = False
+    ONLY_STR_MODE: bool = True
 
-    HEX_STR_MODE: bool = False
+    HEX_STR_MODE: bool = True
 
     log_level: str = "DEBUG"
 
