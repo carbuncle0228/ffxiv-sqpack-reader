@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     )
 
     DEBUG_SKIP: bool = False
+    SKIP_ERROR: bool = False
 
 
 settings = Settings()

@@ -9,6 +9,7 @@ from app.se_string.error import (
     InvalidTextError,
     SeStringError,
 )
+from app.se_string.packed import get_length_bytes_str
 from app.se_string.type import ExpressionType, MacroKind
 
 
@@ -24,12 +25,9 @@ class SeString:
         reader = PayloadReader(self.data)
         try:
             return [payload for payload in reader]
-        except SeStringError as e:
-            logging.exception(e, exc_info=True)
-            return "invalid SeString"
         except Exception as e:
             logging.exception(e, exc_info=True)
-            return "parse error"
+            raise e
 
     def format(self) -> str:
         reader = PayloadReader(self.data)
@@ -38,11 +36,16 @@ class SeString:
             return "".join(str(payload) for payload in reader)
         except SeStringError as e:
             logging.exception(e, exc_info=True)
-
-            return "invalid SeString"
+            if settings.SKIP_ERROR:
+                return "invalid SeString"
+            else:
+                raise e
         except Exception as e:
             logging.exception(e, exc_info=True)
-            return "parse error"
+            if settings.SKIP_ERROR:
+                return "parse error"
+            else:
+                raise e
 
     def __str__(self):
         return self.format()
@@ -91,31 +94,21 @@ class MacroPayload:
     def __str__(self):
         return self.format()
 
+    def __format_hex(self):
+        content = "".join(f"{b:02X}" for b in self.bytes) if self.bytes else ""
+
+        return f"<hex:02{self.kind.value:02X}{get_length_bytes_str(self.bytes)}{content}03>"
+
     def format_macro(self):
         if settings.HEX_STR_MODE:
-            content = "".join(f"{b:02X}" for b in self.bytes) if self.bytes else ""
+            return self.__format_hex()
+        if self.kind == MacroKind.SWITCH:
+            return self.__format_hex()
+        reader = MacroExpressionReader(self.bytes)
 
-            return f"<hex:02{self.kind.value:02X}{len(self.bytes) + 1:02X}{content}03>"
+        args = ",".join(str(arg) for arg in reader)
 
-        # arguments: SliceCursor = self.args()
-
-        match self.kind:
-            case MacroKind.IF:
-                reader = MacroExpressionReader(self.bytes)
-                try:
-                    args = [str(arg) for arg in reader]
-                except SeStringError as e:
-                    logging.exception(e, exc_info=True)
-                    return "invalid SeString"
-                except Exception as e:
-                    logging.exception(e, exc_info=True)
-                    return "parse error"
-
-                return f'{{macro("{self.kind.name}", {args})}}'
-
-            case _:
-                # arg_expr = Expression.read(arguments)
-                return f'{{macro("{self.kind.name}", {self.bytes})}}'
+        return f'{{macro("{self.kind.name}", [{args}])}}'
 
 
 MACRO_START = 0x02
@@ -187,53 +180,63 @@ class Expression:
     def format(self) -> str:
         match self.type:
             case ExpressionType.U32:
-                return f'{{expression("{self.type.name}", {self.value})}}'
+                return f'expression("{self.type.name}", {self.value})'
             case ExpressionType.U32Packed:
-                return f'{{expression("{self.type.name}", {self.value})}}'
+                return f'expression("{self.type.name}", {self.value})'
             case ExpressionType.Millisecond:
-                return f'{{expression("{self.type.name}")}}'
+                return f'expression("{self.type.name}")'
             case ExpressionType.Second:
-                return f'{{expression("{self.type.name}")}}'
+                return f'expression("{self.type.name}")'
             case ExpressionType.Minute:
-                return f'{{expression("{self.type.name}")}}'
+                return f'expression("{self.type.name}")'
             case ExpressionType.Hour:
-                return f'{{expression("{self.type.name}")}}'
+                return f'expression("{self.type.name}")'
             case ExpressionType.Day:
-                return f'{{expression("{self.type.name}")}}'
+                return f'expression("{self.type.name}")'
             case ExpressionType.Weekday:
-                return f'{{expression("{self.type.name}")}}'
+                return f'expression("{self.type.name}")'
             case ExpressionType.Month:
-                return f'{{expression("{self.type.name}")}}'
+                return f'expression("{self.type.name}")'
             case ExpressionType.Year:
                 return f'expression("{self.type.name}")'
             case ExpressionType.Ge:
-                return f'{{expression("{self.type.name}", {self.value[0]}, {self.value[1]})}}'
+                return (
+                    f'expression("{self.type.name}", {self.value[0]}, {self.value[1]})'
+                )
             case ExpressionType.Gt:
-                return f'{{expression("{self.type.name}", {self.value[0]}, {self.value[1]})}}'
+                return (
+                    f'expression("{self.type.name}", {self.value[0]}, {self.value[1]})'
+                )
             case ExpressionType.Le:
-                return f'{{expression("{self.type.name}", {self.value[0]}, {self.value[1]})}}'
+                return (
+                    f'expression("{self.type.name}", {self.value[0]}, {self.value[1]})'
+                )
             case ExpressionType.Lt:
-                return f'{{expression("{self.type.name}", {self.value[0]}, {self.value[1]})}}'
+                return (
+                    f'expression("{self.type.name}", {self.value[0]}, {self.value[1]})'
+                )
             case ExpressionType.Eq:
-                return f'{{expression("{self.type.name}", {self.value[0]}, {self.value[1]})}}'
+                return (
+                    f'expression("{self.type.name}", {self.value[0]}, {self.value[1]})'
+                )
             case ExpressionType.Ne:
-                return f'{{expression("{self.type.name}", {self.value[0]}, {self.value[1]})}}'
+                return (
+                    f'expression("{self.type.name}", {self.value[0]}, {self.value[1]})'
+                )
             case ExpressionType.LocalNumber:
-                return f'{{expression("{self.type.name}", {self.value})}}'
+                return f'expression("{self.type.name}", {self.value})'
             case ExpressionType.GlobalNumber:
-                return f'{{expression("{self.type.name}", {self.value})}}'
+                return f'expression("{self.type.name}", {self.value})'
             case ExpressionType.LocalString:
-                return f'{{expression("{self.type.name}", {self.value})}}'
+                return f'expression("{self.type.name}", {self.value})'
             case ExpressionType.GlobalString:
-                return f'{{expression("{self.type.name}", {self.value})}}'
+                return f'expression("{self.type.name}", {self.value})'
             case ExpressionType.StackColor:
-                return f'{{expression("{self.type.name}")}}'
-            case ExpressionType.U32Packed:
-                return f'{{expression("{self.type.name}", {self.value})}}'
+                return f'expression("{self.type.name}")'
             case ExpressionType.SeString:
-                return f'{{expression("{self.type.name}", {self.value})}}'
+                return f'expression("{self.type.name}", {self.value})'
             case _:
-                return f'{{expression("{self.type.name}", {self.value})}}'
+                return f'expression("{self.type.name}", {self.value})'
 
     def __str__(self):
         return self.format()
@@ -318,6 +321,7 @@ class MacroExpressionReader:
             raise InvalidExpressionError
         string_length = expr.value
         string_data = self.cursor.take(string_length)
+
         return SeString(string_data)
 
     def __next__(self):

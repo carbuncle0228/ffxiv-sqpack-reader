@@ -1,20 +1,4 @@
-from app.se_string import SliceCursor
-
-
-def read_packed_u32(cursor_bytes_: bytes, kind: int) -> int:
-    cursor = SliceCursor(cursor_bytes_)
-    f"{kind + 1:b}"
-    f"{0xF0:b}"
-    f"{0xFE:b}"
-    flags = (kind + 1) & 0b1111
-    bytes_ = [0] * 4
-    for i in reversed(range(4)):
-        if flags & (1 << i):
-            bytes_[i] = cursor.next() or 0
-    return int.from_bytes(bytes_, "little")
-
-
-def write_packed_u32(value: int) -> bytes:
+def get_packed_u32_bytes(value: int) -> bytes:
     bytes_ = value.to_bytes(4, byteorder="big")
     bits_str = ""
     i = 3
@@ -31,3 +15,19 @@ def write_packed_u32(value: int) -> bytes:
         if int(bit):
             packed_u32 += [bytes_[i]]
     return bytes(packed_u32)
+
+
+def get_length_bytes_str(bytes_: bytes) -> str:
+    len_bytes = len(bytes_) + 1
+    if len_bytes <= 0xCF:
+        return f"{len_bytes:02X}"
+    else:
+        return "".join(f"{b:02X}" for b in get_packed_u32_bytes(len_bytes))
+
+
+def get_length_bytes(bytes_: bytes) -> bytes:
+    len_bytes = len(bytes_) + 1
+    if len_bytes <= 0xCF:
+        return [len_bytes]
+    else:
+        return get_packed_u32_bytes(len_bytes)
