@@ -34,7 +34,10 @@ class SeString:
         reader = PayloadReader(self.data, self.is_inner)
 
         try:
-            return "".join(str(payload) for payload in reader)
+            if self.is_inner:
+                return f"[{','.join(str(payload) for payload in reader)}]"
+            else:
+                return "".join(str(payload) for payload in reader)
         except SeStringError as e:
             logging.exception(e, exc_info=True)
             if settings.SKIP_ERROR:
@@ -68,11 +71,14 @@ class TextPayload:
     def format(self) -> str:
         try:
             if self.is_inner:
-                return f'"{self.bytes.decode("utf-8")}"'
+                return f"{self.bytes}"
             else:
                 return self.bytes.decode("utf-8")
         except UnicodeDecodeError:
             raise InvalidTextError
+
+    def __len__(self):
+        return len(self.bytes)
 
     def __str__(self):
         return self.format()
@@ -85,7 +91,9 @@ class MacroPayload:
         self.bytes = bytes_data
 
     def args(self):
-        return SliceCursor(self.bytes)
+        reader = MacroExpressionReader(self.bytes)
+
+        return [arg for arg in reader]
 
     def __repr__(self):
         return f"MacroPayload({self.kind}, {self.bytes})"
@@ -104,6 +112,9 @@ class MacroPayload:
         content = "".join(f"{b:02X}" for b in self.bytes) if self.bytes else ""
 
         return f"<hex:02{self.kind.value:02X}{get_length_bytes_str(self.bytes)}{content}03>"
+
+    def __len__(self):
+        return len(self.bytes)
 
     def format_macro(self, is_inner=False):
         if settings.HEX_STR_MODE:
