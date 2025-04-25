@@ -90,7 +90,7 @@ def expression(*args):
     return ""
 
 
-def macro(*args):
+def macro(*args, **kwargs):
     type = args[0]
     kind = MacroKind[type]
     args_value = args[1:]
@@ -99,9 +99,14 @@ def macro(*args):
     end_byte = [0x03]
     flat_list = list(chain.from_iterable(args_value[0]))
     length_bytes = get_length_bytes(flat_list)
-
-    return start_byte + [kind.value] + length_bytes + flat_list + end_byte
+    to_hex = kwargs.get("to_hex", False)
+    macro_bytes = start_byte + [kind.value] + length_bytes + flat_list + end_byte
+    if to_hex:
+        return f"<hex:{''.join(f'{b:02X}' for b in macro_bytes)}>"
+    else:
+        return macro_bytes
 
 
 def evaluated_se_string(se_string: str):
-    eval(f'f"""{se_string}"""')
+    s = eval(f'f"""{se_string}"""')
+    return s

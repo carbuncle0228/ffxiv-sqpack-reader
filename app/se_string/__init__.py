@@ -18,8 +18,9 @@ class SeString:
     Square Enix rich text format (SeString).
     """
 
-    def __init__(self, data: bytes):
+    def __init__(self, data: bytes, is_inner=False):
         self.data = data
+        self.is_inner = is_inner
 
     def payloads(self):
         reader = PayloadReader(self.data)
@@ -30,7 +31,7 @@ class SeString:
             raise e
 
     def format(self) -> str:
-        reader = PayloadReader(self.data)
+        reader = PayloadReader(self.data, self.is_inner)
 
         try:
             return "".join(str(payload) for payload in reader)
@@ -52,8 +53,9 @@ class SeString:
 
 
 class TextPayload:
-    def __init__(self, bytes_data):
+    def __init__(self, bytes_data, is_inner=False):
         self.bytes = bytes_data
+        self.is_inner = is_inner
 
     def __eq__(self, other):
         if not isinstance(other, TextPayload):
@@ -65,7 +67,10 @@ class TextPayload:
 
     def format(self) -> str:
         try:
-            return self.bytes.decode("utf-8")
+            if self.is_inner:
+                return f'"{self.bytes.decode("utf-8")}"'
+            else:
+                return self.bytes.decode("utf-8")
         except UnicodeDecodeError:
             raise InvalidTextError
 
@@ -74,8 +79,9 @@ class TextPayload:
 
 
 class MacroPayload:
-    def __init__(self, kind, bytes_data):
+    def __init__(self, kind, bytes_data, is_inner=False):
         self.kind = kind
+        self.is_inner = is_inner
         self.bytes = bytes_data
 
     def args(self):
@@ -86,7 +92,7 @@ class MacroPayload:
 
     def format(self) -> str:
         try:
-            return self.format_macro()
+            return self.format_macro(self.is_inner)
 
         except UnicodeDecodeError:
             raise InvalidTextError
@@ -99,7 +105,7 @@ class MacroPayload:
 
         return f"<hex:02{self.kind.value:02X}{get_length_bytes_str(self.bytes)}{content}03>"
 
-    def format_macro(self):
+    def format_macro(self, is_inner=False):
         if settings.HEX_STR_MODE:
             return self.__format_hex()
         if self.kind == MacroKind.SWITCH:
@@ -107,8 +113,10 @@ class MacroPayload:
         reader = MacroExpressionReader(self.bytes)
 
         args = ",".join(str(arg) for arg in reader)
-
-        return f'{{macro("{self.kind.name}", [{args}])}}'
+        if self.is_inner:
+            return f'macro("{self.kind.name}", [{args}])'
+        else:
+            return f'{{macro("{self.kind.name}", [{args}], to_hex=True)}}'
 
 
 MACRO_START = 0x02
@@ -116,8 +124,9 @@ MACRO_END = 0x03
 
 
 class PayloadReader:
-    def __init__(self, data: bytes):
+    def __init__(self, data: bytes, is_inner=False):
         self.cursor = SliceCursor(data)
+        self.is_inner = is_inner
 
     def __iter__(self):
         return self
@@ -159,11 +168,11 @@ class PayloadReader:
             if self.cursor.next() != MACRO_END:
                 raise InvalidMacroError()
 
-            return MacroPayload(kind, body)
+            return MacroPayload(kind, body, self.is_inner)
 
         # Read text until the next macro
         text_bytes = self.cursor.take_until(lambda byte: byte == MACRO_START)
-        return TextPayload(text_bytes)
+        return TextPayload(text_bytes, self.is_inner)
 
 
 class Expression:
@@ -322,7 +331,7 @@ class MacroExpressionReader:
         string_length = expr.value
         string_data = self.cursor.take(string_length)
 
-        return SeString(string_data)
+        return SeString(string_data, is_inner=True)
 
     def __next__(self):
         if self.cursor.eof():

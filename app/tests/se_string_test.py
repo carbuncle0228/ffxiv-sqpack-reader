@@ -15,9 +15,8 @@ def test_se_string():
     s = str(se_string)
     assert (
         s
-        == """Delivers an attack with a potency of {macro("IF", [expression("Eq", expression("GlobalNumber", expression("U32", 68)), expression("U32", 19)),expression("SeString", macro("IF", [expression("Ge", expression("GlobalNumber", expression("U32", 72)), expression("U32", 94)),expression("U32Packed", 220),expression("SeString", macro("IF", [expression("Eq", expression("GlobalNumber", expression("U32", 68)), expression("U32", 19)),expression("SeString", macro("IF", [expression("Ge", expression("GlobalNumber", expression("U32", 72)), expression("U32", 84)),expression("U32", 200),expression("U32", 150)])),expression("U32", 150)]))])),expression("SeString", macro("IF", [expression("Eq", expression("GlobalNumber", expression("U32", 68)), expression("U32", 19)),expression("SeString", macro("IF", [expression("Ge", expression("GlobalNumber", expression("U32", 72)), expression("U32", 84)),expression("U32", 200),expression("U32", 150)])),expression("U32", 150)]))])}."""
+        == """Delivers an attack with a potency of {macro("IF", [expression("Eq", expression("GlobalNumber", expression("U32", 68)), expression("U32", 19)),expression("SeString", macro("IF", [expression("Ge", expression("GlobalNumber", expression("U32", 72)), expression("U32", 94)),expression("U32Packed", 220),expression("SeString", macro("IF", [expression("Eq", expression("GlobalNumber", expression("U32", 68)), expression("U32", 19)),expression("SeString", macro("IF", [expression("Ge", expression("GlobalNumber", expression("U32", 72)), expression("U32", 84)),expression("U32", 200),expression("U32", 150)])),expression("U32", 150)]))])),expression("SeString", macro("IF", [expression("Eq", expression("GlobalNumber", expression("U32", 68)), expression("U32", 19)),expression("SeString", macro("IF", [expression("Ge", expression("GlobalNumber", expression("U32", 72)), expression("U32", 84)),expression("U32", 200),expression("U32", 150)])),expression("U32", 150)]))], to_hex=True)}."""
     )
-    s = """Delivers an attack with a potency of {macro("IF", [expression("Eq", expression("GlobalNumber", expression("U32", 68)), expression("U32", 19)),expression("SeString", macro("IF", [expression("Ge", expression("GlobalNumber", expression("U32", 72)), expression("U32", 94)),expression("U32Packed", 220),expression("SeString", macro("IF", [expression("Eq", expression("GlobalNumber", expression("U32", 68)), expression("U32", 19)),expression("SeString", macro("IF", [expression("Ge", expression("GlobalNumber", expression("U32", 72)), expression("U32", 84)),expression("U32", 200),expression("U32", 150)])),expression("U32", 150)]))])),expression("SeString", macro("IF", [expression("Eq", expression("GlobalNumber", expression("U32", 68)), expression("U32", 19)),expression("SeString", macro("IF", [expression("Ge", expression("GlobalNumber", expression("U32", 72)), expression("U32", 84)),expression("U32", 200),expression("U32", 150)])),expression("U32", 150)]))])}."""
 
     evaluated_value = evaluated_se_string(s)
 
@@ -28,7 +27,7 @@ def test_se_string():
 
 
 def test_direct_evaluator_macro():
-    bytes_ = macro(
+    hex_str = macro(
         "IF",
         [
             expression(
@@ -116,8 +115,8 @@ def test_direct_evaluator_macro():
                 ),
             ),
         ],
+        to_hex=True,
     )
-    hex_str = f"<hex:{''.join(f'{b:02X}' for b in bytes_)}>"
 
     assert (
         hex_str
