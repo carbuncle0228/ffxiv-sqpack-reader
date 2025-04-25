@@ -10,7 +10,7 @@ process_count = 0
 failure_count = 0
 for file_path in Path(settings.evaluate_folder_path).rglob("*"):
     if file_path.is_file():
-        if "ActionTransient.csv" not in str(file_path):
+        if "ActionTransient.csv" not in str(file_path) and settings.DEBUG_SKIP:
             continue
         with open(file_path, newline="", encoding="utf-8") as csvfile:
             relative_path = file_path.relative_to(

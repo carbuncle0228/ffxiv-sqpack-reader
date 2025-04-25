@@ -21,7 +21,7 @@ from app.sqpack import SQPack
 
 
 def write_csv(sqpack: SQPack, target_folder, file_path):
-    if file_path not in {"Addon"} and settings.DEBUG_SKIP:
+    if file_path not in {"Addon", "ActionTransient"} and settings.DEBUG_SKIP:
         return  # TODO debug
     target_path = os.path.join(
         target_folder, os.path.normpath(f"rawexd/{file_path}.csv")

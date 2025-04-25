@@ -26,13 +26,13 @@ class Settings(BaseSettings):
 
     log_level: str = "DEBUG"
 
+    DEBUG_SKIP: bool = False
+    SKIP_ERROR: bool = False
+
     model_config = SettingsConfigDict(
         case_sensitive=True,
         env_file=f"./config/{os.environ.get('ENV', '')}.env",
     )
-
-    DEBUG_SKIP: bool = False
-    SKIP_ERROR: bool = False
 
 
 settings = Settings()
