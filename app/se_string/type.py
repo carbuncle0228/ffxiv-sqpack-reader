@@ -50,6 +50,7 @@ class MacroKind(IntEnum):
     FR_NOUN = 0x33
     CH_NOUN = 0x34
     LOWER_HEAD = 0x40
+    UNKNOWN2 = 0x41
     COLOR_TYPE = 0x48
     EDGE_COLOR_TYPE = 0x49
     RUBY = 0x4A
