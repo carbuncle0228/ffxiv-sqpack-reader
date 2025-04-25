@@ -119,8 +119,6 @@ class MacroPayload:
     def format_macro(self, is_inner=False):
         if settings.HEX_STR_MODE:
             return self.__format_hex()
-        if self.kind == MacroKind.SWITCH:
-            return self.__format_hex()
         reader = MacroExpressionReader(self.bytes)
 
         args = ",".join(str(arg) for arg in reader)
