@@ -5,7 +5,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    folder_path: str = "~/project/ff14/FINAL FANTASY XIV - A Realm Reborn"
+    folder_path: str = (
+        r"C:\Program Files (x86)\SquareEnix\FINAL FANTASY XIV - A Realm Reborn"
+    )
     target_path: str = "./resources/output"
 
     evaluate_folder_path: str = "./resources/output/2025.04.16.0000.0000"
