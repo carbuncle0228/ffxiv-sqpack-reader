@@ -31,7 +31,7 @@ def write_csv(sqpack: SQPack, target_folder, file_path):
         return  # only write file have multiple language
     os.makedirs(os.path.dirname(target_path), exist_ok=True)
     with open(target_path, "w", buffering=1024 * 1024 * 8, encoding="utf-8") as file:
-        csv_writer = csv.writer(file, delimiter=",")
+        csv_writer = csv.writer(file, delimiter=",", lineterminator="\n")
         key_row = ["key"]
         header_row = ["#"]
         offset_row = ["offset"]
