@@ -134,3 +134,4 @@ output/*
 0a0000.win32*
 resources/output
 resources/evaluate_output/rawexd
+dist-linux

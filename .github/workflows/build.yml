@@ -36,6 +36,14 @@ jobs:
         include-package: app
         windows-console-mode: disable
 
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: build/main_ui.exe
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
