@@ -110,7 +110,9 @@ class SettingsDialog(QDialog):
         settings.HEX_STR_MODE = self.hex_str_mode.isChecked()
 
         # 儲存到 .env 檔案
+        os.makedirs("config", exist_ok=True)
         env_path = os.path.join("config", ".env")
+
         with open(env_path, "w", encoding="utf-8") as f:
             f.write(f"language={settings.language}\n")
             f.write(f"folder_path={settings.folder_path}\n")
