@@ -1,6 +1,6 @@
 annotated-types==0.7.0 ; python_version >= "3.12" and python_version < "3.14"
 cffi==1.17.1 ; python_version >= "3.12" and python_version < "3.14" and platform_python_implementation == "PyPy"
-colorama==0.4.6 ; python_version >= "3.12" and python_version < "3.14" and (platform_system == "Windows" or sys_platform == "win32")
+colorama==0.4.6 ; python_version >= "3.12" and python_version < "3.14" and (sys_platform == "win32" or platform_system == "Windows")
 iniconfig==2.0.0 ; python_version >= "3.12" and python_version < "3.14"
 nuitka==2.6.8 ; python_version >= "3.12" and python_version < "3.14"
 ordered-set==4.1.0 ; python_version >= "3.12" and python_version < "3.14"
