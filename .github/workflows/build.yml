@@ -31,7 +31,7 @@ jobs:
       with:
         nuitka-version: main
         script-name: main_ui.py
-        mode: Onefile
+        mode: onefile
         enable-plugins: pyside6
         include-package: app
         windows-console-mode: disable
