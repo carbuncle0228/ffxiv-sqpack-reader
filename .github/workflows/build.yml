@@ -35,6 +35,7 @@ jobs:
         enable-plugins: pyside6
         include-package: app
         windows-console-mode: disable
+        windows-icon-from-ico: icon.ico
 
     - name: Create Release
       uses: softprops/action-gh-release@v2
