@@ -8,11 +8,12 @@ readme = "README.md"
 package-mode = false
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = ">=3.12,<3.14"
 pydantic-settings = "^2.3.4"
 orjson = "^3.10.6"
 nuitka = "^2.6.8"
 tqdm = "^4.67.1"
+pyside6 = "^6.9.0"
 
 
 [tool.poetry.group.dev.dependencies]
